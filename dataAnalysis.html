@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Bootstrap 实例 - 默认的导航栏</title>
+  <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap-datetimepicker\css\bootstrap-datetimepicker.min.css">
+  <link rel="stylesheet" href="header.css">
+  <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="bootstrap-datetimepicker\js\bootstrap-datetimepicker.min.js"></script>
+  <!--<script src="header.js"></script>-->
+</head>
+
+<body>
+  <div id="header"></div>
+  <div class="container col-md-11 col-md-offset-1">
+  </div>
+
+</body>
+<script type="text/javascript">
+  $(function() {
+    $('#header').load('header.html', function() {
+      if (window.location.href.match("dataAnalysis")) {
+        $("nav ul li").removeClass("active");
+        $("nav ul li:eq(5)").addClass("active");
+      }
+    });
+  })
+</script>
+
+</html>

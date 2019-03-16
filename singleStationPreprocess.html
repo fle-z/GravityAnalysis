@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    path.line {
+      fill: none;
+      stroke-width: 1px;
+      pointer-events: none;
+    }
+
+    .zoomOut {
+      fill: #66a;
+      cursor: pointer;
+    }
+
+    .zoomOutText {
+      pointer-events: none;
+      fill: #ccc;
+    }
+
+    .zoomOverlay {
+      pointer-events: all;
+      fill: none;
+    }
+
+    .band {
+      fill: none;
+      stroke-width: 2px;
+      stroke: black;
+    }
+  </style>
+  <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+  <script src="stack.js"></script>
+</head>
+
+<body>
+
+  <button onClick="zoomOut()"> Zoom Out </button>
+  <button onClick="rollback()"> Rollback </button>
+  <div id="graph"></div>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+    $(function() {
+      pullData();
+    })
+
+    var bandPos = [-1, -1];
+    var pos;
+
+    var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+    //initialized when data is pulled
+    var x, y, xDomain, yDomain, xDomainMin, yDomainMin, xAxis, yAxis, zoomArea, line;
+    xDomain = 0;
+    yDomain = 0;
+    xDomainMin = 0;
+    yDomainMin = 0;
+    //调用一个栈将之前的选择区域存起来
+    var stack = new Stack();
+
+    var margin = {
+      top: 40,
+      right: 40,
+      bottom: 50,
+      left: 60
+    }
+    var width = 900 - margin.left - margin.right;
+    var height = 450 - margin.top - margin.bottom;
+    var drag = d3.drag();
+
+    var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    svg.append("clipPath")
+      .attr("id", "clip")
+      .append("rect")
+      .attr("width", width)
+      .attr("height", height);
+
+    var zoomOverlay = svg.append("rect")
+      .attr("width", width - 10)
+      .attr("height", height)
+      .attr("class", "zoomOverlay")
+      .call(drag);
+
+
+    var band = svg.append("rect")
+      .attr("width", 0)
+      .attr("height", 0)
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("class", "band");
+
+    var zoomout = svg.append("g");
+
+    drag.on("end", function() {
+      /*
+        注意！这里如果直接使用stack.push(zoomArea);进行是是浅拷贝！！！
+        在JavaScript中，对于Object和Array这类引用类型值，当从一个变量向另一个变量
+        复制引用类型值时，这个值的副本其实是一个指针，两个变量指向同一个堆对象，改变
+        其中一个变量，另一个也会受到影响。
+      */
+      var tmp = {
+        x1: zoomArea.x1,
+        x2: zoomArea.x2,
+        y1: zoomArea.y1,
+        y2: zoomArea.y2
+      };
+      stack.push(tmp);
+
+      var pos = d3.mouse(this);
+      var x1 = x.invert(bandPos[0]);
+      var x2 = x.invert(pos[0]);
+
+      if (x1 < x2) {
+        zoomArea.x1 = x1;
+        zoomArea.x2 = x2;
+      } else {
+        zoomArea.x1 = x2;
+        zoomArea.x2 = x1;
+      }
+
+      var y1 = y.invert(pos[1]);
+      var y2 = y.invert(bandPos[1]);
+
+      if (x1 < x2) {
+        zoomArea.y1 = y1;
+        zoomArea.y2 = y2;
+      } else {
+        zoomArea.y1 = y2;
+        zoomArea.y2 = y1;
+      }
+
+      bandPos = [-1, -1];
+
+      d3.select(".band").transition()
+        .attr("width", 0)
+        .attr("height", 0)
+        .attr("x", bandPos[0])
+        .attr("y", bandPos[1]);
+
+      zoom();
+    });
+
+    drag.on("drag", function() {
+
+      var pos = d3.mouse(this);
+
+      if (pos[0] < bandPos[0]) {
+        d3.select(".band").
+        attr("transform", "translate(" + (pos[0]) + "," + bandPos[1] + ")");
+      }
+      if (pos[1] < bandPos[1]) {
+        d3.select(".band").
+        attr("transform", "translate(" + (pos[0]) + "," + pos[1] + ")");
+      }
+      if (pos[1] < bandPos[1] && pos[0] > bandPos[0]) {
+        d3.select(".band").
+        attr("transform", "translate(" + (bandPos[0]) + "," + pos[1] + ")");
+      }
+
+      //set new position of band when user initializes drag
+      if (bandPos[0] == -1) {
+        bandPos = pos;
+        d3.select(".band").attr("transform", "translate(" + bandPos[0] + "," + bandPos[1] + ")");
+      }
+
+      d3.select(".band").transition().duration(1)
+        .attr("width", Math.abs(bandPos[0] - pos[0]))
+        .attr("height", Math.abs(bandPos[1] - pos[1]));
+    });
+
+    function zoom() {
+      //recalculate domains
+      if (zoomArea.x1 > zoomArea.x2) {
+        x.domain([zoomArea.x2, zoomArea.x1]);
+      } else {
+        x.domain([zoomArea.x1, zoomArea.x2]);
+      }
+
+      if (zoomArea.y1 > zoomArea.y2) {
+        y.domain([zoomArea.y2, zoomArea.y1]);
+      } else {
+        y.domain([zoomArea.y1, zoomArea.y2]);
+      }
+
+      //update axis and redraw lines
+      var t = svg.transition().duration(750);
+      t.select(".x.axis").call(xAxis);
+      t.select(".y.axis").call(yAxis);
+      t.selectAll(".line").attr("d", line);
+
+    }
+
+    function pullData() {
+      var input;
+      var data = [];
+      xDomain = -100000;
+      yDomain = -100000;
+      yDomainMin = 100000;
+      xDomainMin = 100000;
+
+      d3.json("wushi_X212MPET0042_2015_1_1.json", function(res) {
+        input = res
+        if (Array.isArray(input)) {
+          updateChart(input);
+        }
+      });
+    }
+
+    function updateChart(data) {
+      var xmax, ymax, xmin, ymin;
+
+      d3.selectAll('.line').remove();
+      d3.selectAll(".axis").remove();
+      // 找到数组中的最大最小值
+      // 注意！！！最小值中可能有缺失值
+      xmax = data.map(d => d.x).reduce((a, c) => Math.max(a, c))
+      ymax = data.filter(d => d.y < 0).map(d => d.y).reduce((a, c) => Math.max(a, c))
+
+      xmin = data.map(d => d.x).reduce((a, c) => Math.min(a, c))
+      ymin = data.map(d => d.y).reduce((a, c) => Math.min(a, c))
+
+      xDomain = Math.max(xDomain, xmax);
+      yDomain = Math.max(yDomain, ymax);
+      xDomainMin = Math.min(xDomainMin, xmin);
+      yDomainMin = Math.min(yDomainMin, ymin);
+      xDomain += xDomain * .0010;
+      yDomain -= yDomain * .0010;
+      xDomainMin += xDomainMin * .0010;
+      yDomainMin += yDomainMin * .0010;
+
+
+      line = d3.line()
+        .x(function(d) {
+          return x(d.x);
+        })
+        .y(function(d) {
+          return y(d.y);
+        });
+
+      zoomArea = {
+        x1: xDomainMin,
+        y1: yDomainMin,
+        x2: xDomain,
+        y2: yDomain
+      };
+
+      x = d3.scaleLinear().range([0, width]).domain([xDomainMin, xDomain]);
+      y = d3.scaleLinear().range([height, 0]).domain([yDomainMin, yDomain]);
+
+      xAxis = d3.axisBottom(x)
+      yAxis = d3.axisLeft(y)
+
+      //UPDATE AXES
+      svg.append("g")
+        .attr("class", "x axis")
+        .call(xAxis)
+        .attr("transform", "translate(0," + height + ")");
+
+      svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+
+      svg.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("clip-path", "url(#clip)")
+        .style("stroke", colors(0))
+        .attr("d", line);
+
+      d3.select(".band").raise();
+
+      zoom();
+    }
+
+    var zoomOut = function() {
+      x.domain([xDomainMin, xDomain]);
+      y.domain([yDomainMin, yDomain]);
+
+      var t = svg.transition().duration(750);
+      t.select(".x.axis").call(xAxis);
+      t.select(".y.axis").call(yAxis);
+
+      t.selectAll(".line").attr("d", line);
+    }
+
+    var rollback = function() {
+      if(stack.size() == 0){
+        alert("已经是最原始的图了！")
+      }else{        
+        var lastArea = stack.peek();
+        stack.pop()
+        zoomArea.x1 = lastArea.x1;
+        zoomArea.x2 = lastArea.x2;
+        zoomArea.y1 = lastArea.y1;
+        zoomArea.y2 = lastArea.y2;
+
+        bandPos = [-1, -1];
+
+        d3.select(".band").transition()
+        .attr("width", 0)
+        .attr("height", 0)
+        .attr("x", bandPos[0])
+        .attr("y", bandPos[1]);
+
+        zoom();
+      }
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Bootstrap 实例 - 默认的导航栏</title>
+  <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap-datetimepicker\css\bootstrap-datetimepicker.min.css">
+  <link rel="stylesheet" href="header.css">
+  <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="bootstrap-datetimepicker\js\bootstrap-datetimepicker.min.js"></script>
+  <!--<script src="header.js"></script>-->
+</head>
+
+<body>
+  <div id="header"></div>
+  <div class="container col-md-9 col-md-offset-2">
+    <form action="" class="form-inline" role="form">
+      <div class="form-group">
+        <label for="datetimeStart">起始时间：</label>
+        <div id="datetimeStart" class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input" data-link-format="yyyy-mm-dd">
+          <input class="form-control" size="16" type="text" value="" readonly>
+          <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+        </div>
+      </div>&nbsp&nbsp&nbsp
+      <div class="form-group">
+        <label for="datetimeEnd">截止时间：</label>
+        <div id="datetimeEnd" class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input" data-link-format="yyyy-mm-dd">
+          <input class="form-control" size="16" type="text" value="" readonly>
+          <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+          <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+        </div>
+      </div>&nbsp&nbsp&nbsp
+      <div class="form-group sample-rate">
+        <label for="name">采样率：</label>
+        <select class="form-control" style="background-color: #EEEEEE;">
+          <option>秒值</option>
+          <option>分钟值</option>
+          <option>小时值</option>
+        </select>
+      </div>&nbsp&nbsp&nbsp
+      <div class="btn-group" id="button">
+        <button type="button" class="btn btn-default" style="background-color: #EEEEEE;">确定</button>
+      </div>
+    </form>
+  </div>
+
+</body>
+<script type="text/javascript">
+  $(function() {
+    $('#header').load('header.html', function() {
+      if (window.location.href.match("observationResult")) {
+        $("nav ul li").removeClass("active");
+        $("nav ul li:eq(2)").addClass("active");
+      }
+    });
+  })
+  $("#button button").click(function() {
+    var start_date = $("#datetimeStart input").val();
+    var end_date = $("#datetimeEnd input").val();
+    var sample_rate = $(".sample-rate select").val();
+    if (start_date == "") {
+      alert("请输入开始时间")
+    } else if (end_date == "") {
+      alert('请输入截止时间')
+    } else {
+      alert(start_date + end_date + sample_rate)
+      var data = {
+        start_date: start_date,
+        end_date: end_date,
+        sample_rate: sample_rate
+      };
+      $.ajax({
+        url: "",
+        data: data,
+        type: "POST",
+        dataType: "json",
+        success: function(data) {
+          // data = jQuery.parseJSON(data);  //dataType指明了返回数据为json类型，故不需要再反序列化
+          // ...
+        }
+      });
+    }
+  });
+  $("#datetimeStart").datetimepicker({
+    format: 'yyyy-mm-dd',
+    minView: 'month',
+    language: 'zh-CN',
+    weekStart: 1,
+    todayBtn: 1,
+    autoclose: 1,
+    todayHighlight: 1,
+    startView: 2,
+    minView: 2,
+    forceParse: 0
+  });
+  $("#datetimeEnd").datetimepicker({
+    format: 'yyyy-mm-dd',
+    minView: 'month',
+    language: 'zh-CN',
+    weekStart: 1,
+    todayBtn: 1,
+    autoclose: 1,
+    todayHighlight: 1,
+    startView: 2,
+    minView: 2,
+    forceParse: 0
+  });
+</script>
+
+</html>

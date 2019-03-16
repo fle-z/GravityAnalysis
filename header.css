@@ -1,0 +1,74 @@
+  html {
+    height: 100%;
+    width: 1340px;
+  }
+
+  body {
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+  }
+
+  .full {
+    height: 100px;
+  }
+
+  .navbar-default {
+    height: 80px;
+  }
+
+  .navbar-default .navbar-brand {
+    padding-top: 30px;
+    margin-right: 50px;
+    font-size: 2.0em;
+  }
+
+  .navbar-default .navbar-nav {
+    text-align: center;
+    float: none;
+  }
+
+  .navbar-default .navbar-nav li {
+    padding-top: 15px;
+    font-size: 1.5em;
+    display: inline-block;
+    float: none;
+    margin: 0em;
+  }
+
+  #container .panel {
+    height: 500px
+  }
+
+  #container .map {
+    height: 500px;
+    background-color: #000;
+  }
+
+  .quake-time ul, .quake-size ul {
+    margin-bottom: 0px;
+  }
+
+  .quake-time, .quake-size ul li {
+    font-size: 15px;
+  }
+
+  .level-5 {
+    font-size: 23px;
+  }
+
+  .level-7 {
+    font-size: 30px;
+  }
+
+  .quake-day .glyphicon-map-marker {
+    color: red;
+  }
+
+  .quake-week .glyphicon-map-marker {
+    color: orange;
+  }
+
+  .quake-month .glyphicon-map-marker {
+    color: yellow;
+  }

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body,
+        html,
+        #mapContainer {
+            height: 400px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/getscript?v=2.0&ak=NfvmyFwT35W3M8xSIpaeixA2qoUXkWvX">
+        //v2.0版本的引用方式：src="http://api.map.baidu.com/api?v=2.0&ak=您的密钥"
+    </script>
+    <title>地图展示</title>
+</head>
+
+<body>
+    <div id="title" class='col-md-12 col-md-offset-5'></div>
+    <div id="mapContainer" class="col-md-8 col-md-offset-2"></div>
+</body>
+
+</html>
+<script type="text/javascript">
+    //获取url中的参数
+    function getUrlParam(name) {
+        //构造一个含有目标参数的正则表达式对象
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        //匹配目标参数
+        var r = window.location.search.substr(1).match(reg);
+        //返回参数值
+        if (r != null) return decodeURI(r[2]);
+        return null;
+    }
+    // 注意中文乱码！！！
+    var stationName = getUrlParam("stationName");
+    var longitude = "";
+    var latitude = "";
+    $("#title").append("<h2>"+stationName+"重力观测站</h2>");
+    $.getJSON("cityCoordinate.json", function(coordinate) {
+        for(var i = 0; i < coordinate.length; i++) {
+            if (coordinate[i].name == stationName) {
+                longitude = coordinate[i].longitude;
+                latitude = coordinate[i].latitude;
+                break;
+            }
+        }
+        // 百度地图API功能
+        var map = new BMap.Map("mapContainer"); // 创建Map实例
+        var ggPoint = new BMap.Point(longitude, latitude); // 创建点坐标
+        // 给每个地点标一个point
+        marker = new BMap.Marker(ggPoint)
+        map.addOverlay(marker);
+        // 给每个point标一个label，label的样式是可以设置的
+        var opts = {
+            position: ggPoint, // 指定文本标注所在的地理位置
+            offset: new BMap.Size(-coordinate[i].name.length * 7, -35) //设置文本偏移量
+        }
+        label = new BMap.Label(coordinate[i].name, opts)
+        label.setStyle({
+            border: 0,
+            background: "transparent"
+        });
+        map.addOverlay(label);
+        map.centerAndZoom(ggPoint, 6); // 初始化地图,设置中心点坐标和地图级别
+
+        map.setCenter(ggPoint);
+        map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
+    })
+</script>

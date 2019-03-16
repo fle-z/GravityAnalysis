@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Hello, World</title>
+  <style type="text/css">
+    #mapContainer {
+      height: 500px;
+    }
+  </style>
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+  <script type="text/javascript" src="http://api.map.baidu.com/getscript?v=2.0&ak=NfvmyFwT35W3M8xSIpaeixA2qoUXkWvX">
+    //v2.0版本的引用方式：src="http://api.map.baidu.com/api?v=2.0&ak=您的密钥"
+  </script>
+  <!--<script src="header.js"></script>-->
+</head>
+
+<body>
+  <div id="header"></div>
+  <div id="mapContainer" class="col-md-8 col-md-offset-2"></div>
+  <div class="col-md-6 col-md-offset-3">
+    <div class="input-group col-md-4" style="margin-top:0px positon:relative">
+      <input type="text" class="form-control" placeholder="请输入台站名" />
+      <span class="input-group-btn">
+                   <button class="btn btn-info btn-search">查找</button>
+            </span>
+    </div>
+    <table class="table table-striped">
+      <caption>台站详细信息</caption>
+      <thead>
+        <tr>
+          <th>测站代码</th>
+          <th>测站名</th>
+          <th>仪器类型</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script type="text/javascript" src="addTable.js"></script>
+  <script type="text/javascript">
+    $(function() {
+      $('#header').load('header.html', function() {
+        if (window.location.href.match("stationOverview")) {
+          $("nav ul li").removeClass("active");
+          $("nav ul li:eq(4)").addClass("active");
+        }
+      });
+    })
+    var map = new BMap.Map("mapContainer", {
+      minZoom: 4,
+      maxZoom: 8
+    }); // 创建地图实例
+    var point = new BMap.Point(116.404, 39.915); // 创建点坐标
+    map.centerAndZoom(point, 4); // 初始化地图，设置中心点坐标和地图级别
+    map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
+
+    $.getJSON("cityCoordinate.json", function(coordinate) {
+      //在地图上根据经纬度添加标签
+      $.each(coordinate, function(index, obj) {
+        var ggPoint = new BMap.Point(obj.longitude, obj.latitude);
+        // 给每个地点标一个point
+        marker = new BMap.Marker(ggPoint)
+        map.addOverlay(marker);
+        // 给每个point标一个label，label的样式是可以设置的
+        var opts = {
+          position: ggPoint, // 指定文本标注所在的地理位置
+          offset: new BMap.Size(-obj.name.length * 7, -35) //设置文本偏移量
+        }
+        label = new BMap.Label(obj.name, opts)
+        label.setStyle({
+          border: 0,
+          background: "transparent"
+        });
+        map.addOverlay(label);
+        map.setCenter(ggPoint);
+        marker.addEventListener("click", function() {
+          // console.log(marker.point.lng);
+          redirectToDetail(obj.name);
+        });
+      })
+      //在地图后面添加一个table
+      addTable(coordinate)
+    });
+
+    // 注意中文乱码！！！
+    function redirectToDetail(stationName) {
+      window.location.href = encodeURI("./stationDetail.html?stationName=" + stationName);
+    }
+  </script>
+</body>
+
+</html>
